@@ -1,0 +1,170 @@
+{
+  "mcpVersion": "2024-11-05",
+  "name": "howtocook-py-mcp",
+  "version": "0.2.0",
+  "description": "菜谱助手 MCP 服务 - 提供菜谱查询、推荐和膳食计划功能",
+  "author": "HowToCook Team",
+  "license": "MIT",
+  "homepage": "https://github.com/yutayouguan/howtocook-py-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yutayouguan/howtocook-py-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yutayouguan/howtocook-py-mcp/issues"
+  },
+  "keywords": ["mcp", "recipes", "cooking", "meal-planning", "fastmcp", "chinese-cuisine"],
+  "categories": ["food", "lifestyle", "productivity", "health"],
+  "server": {
+    "command": "python",
+    "args": ["main.py"],
+    "env": {
+      "PYTHONPATH": ".",
+      "PYTHONIOENCODING": "utf-8"
+    }
+  },
+  "capabilities": {
+    "tools": true,
+    "resources": true,
+    "prompts": true,
+    "logging": true,
+    "progress": true
+  },
+  "tools": [
+    {
+      "name": "get_all_recipes",
+      "description": "获取所有菜谱的简化信息，只包含名称和描述",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    },
+    {
+      "name": "get_recipes_by_category", 
+      "description": "根据分类查询菜谱，如水产、早餐、荤菜、主食等",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "菜谱分类名称"
+          }
+        },
+        "required": ["category"]
+      }
+    },
+    {
+      "name": "what_to_eat",
+      "description": "根据人数直接推荐适合的菜品组合，包含荤菜和素菜",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "people_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "用餐人数"
+          }
+        },
+        "required": ["people_count"]
+      }
+    },
+    {
+      "name": "recommend_meals",
+      "description": "根据用户的忌口、过敏原、人数智能推荐菜谱，创建一周的膳食计划",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "people_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "用餐人数"
+          },
+          "allergies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "过敏原列表"
+          },
+          "avoid_items": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "忌口食材列表"
+          }
+        },
+        "required": ["people_count"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "howtocook://categories",
+      "name": "菜谱分类",
+      "description": "获取所有可用的菜谱分类列表"
+    },
+    {
+      "uri": "howtocook://stats",
+      "name": "统计信息",
+      "description": "查看菜谱数据的统计信息，包括分类分布和难度分析"
+    },
+    {
+      "uri": "howtocook://health",
+      "name": "健康检查",
+      "description": "获取服务器健康状态、性能指标和系统信息"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "meal_planning_assistant",
+      "description": "专业营养师风格的膳食计划助手",
+      "arguments": [
+        {
+          "name": "people_count",
+          "description": "用餐人数",
+          "required": true
+        },
+        {
+          "name": "dietary_restrictions",
+          "description": "饮食限制",
+          "required": false
+        },
+        {
+          "name": "cuisine_preferences",
+          "description": "菜系偏好",
+          "required": false
+        },
+        {
+          "name": "budget_level",
+          "description": "预算水平",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "recipe_recommendation",
+      "description": "根据场合和技能水平推荐菜谱",
+      "arguments": [
+        {
+          "name": "occasion",
+          "description": "用餐场合",
+          "required": true
+        },
+        {
+          "name": "cooking_time",
+          "description": "可用烹饪时间",
+          "required": false
+        },
+        {
+          "name": "skill_level",
+          "description": "烹饪技能水平",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

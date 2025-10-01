@@ -1,0 +1,12 @@
+# FastMCP Configuration
+# This file contains configuration for the HowToCook MCP server
+
+[server]
+name = "howtocook-py-mcp"
+version = "0.1.0"
+
+[transport]
+type = "stdio"
+
+[logging]
+level = "INFO"
