@@ -4,11 +4,14 @@
 
 import time
 import asyncio
-from typing import Dict, Any
-from ...domain.repositories import RecipeRepository
+from typing import Dict, Any, TYPE_CHECKING
 from ...infrastructure.cache import get_cache
 from ...core.config import get_config
 from .performance_monitor import get_monitor
+
+# 使用 TYPE_CHECKING 避免循环导入
+if TYPE_CHECKING:
+    from ...domain.repositories import RecipeRepository
 
 
 class HealthChecker:
@@ -17,7 +20,15 @@ class HealthChecker:
     def __init__(self):
         """初始化健康检查器"""
         self.start_time = time.time()
-        self.recipe_repo = RecipeRepository()
+        self._recipe_repo = None
+
+    def _get_recipe_repo(self):
+        """延迟导入 RecipeRepository 避免循环导入"""
+        if self._recipe_repo is None:
+            from ...domain.repositories import RecipeRepository
+
+            self._recipe_repo = RecipeRepository()
+        return self._recipe_repo
 
     async def check_data_source(self) -> Dict[str, Any]:
         """
@@ -28,7 +39,8 @@ class HealthChecker:
         """
         try:
             start_time = time.time()
-            recipes = await self.recipe_repo.fetch_all_recipes()
+            recipe_repo = self._get_recipe_repo()
+            recipes = await recipe_repo.fetch_all_recipes()
             response_time = time.time() - start_time
 
             return {
