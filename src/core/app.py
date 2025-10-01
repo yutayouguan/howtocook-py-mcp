@@ -4,8 +4,11 @@ HowToCook Python MCP 服务器主应用
 
 import logging
 from fastmcp import FastMCP
+from fastmcp.server.middleware.timing import TimingMiddleware
+from fastmcp.server.middleware.logging import LoggingMiddleware
+from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
+from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
 from .config import get_config
-from ..infrastructure.middleware import TimingMiddleware, ErrorHandlingMiddleware
 from ..mcp import (
     register_recipe_tools,
     register_meal_tools,
@@ -34,9 +37,11 @@ def create_app() -> FastMCP:
         instructions=f"{config.server.description}。支持按分类查询菜谱、智能推荐菜品组合、制定膳食计划等功能。",
     )
 
-    # 注册中间件 (当FastMCP支持时)
+    # 注册内置中间件
+    app.add_middleware(ErrorHandlingMiddleware(include_traceback=True))
+    app.add_middleware(RateLimitingMiddleware(max_requests_per_second=50))
     app.add_middleware(TimingMiddleware())
-    app.add_middleware(ErrorHandlingMiddleware())
+    app.add_middleware(LoggingMiddleware(include_payloads=False))
 
     # 注册工具
     register_recipe_tools(app)
