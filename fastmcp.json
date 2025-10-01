@@ -15,9 +15,13 @@
   },
   "keywords": ["mcp", "recipes", "cooking", "meal-planning", "fastmcp", "chinese-cuisine"],
   "categories": ["food", "lifestyle", "productivity", "health"],
+  "source": {
+    "type": "module",
+    "module": "server.py"
+  },
   "server": {
     "command": "python",
-    "args": ["main.py"],
+    "args": ["server.py"],
     "env": {
       "PYTHONPATH": ".",
       "PYTHONIOENCODING": "utf-8"

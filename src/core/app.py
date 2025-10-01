@@ -3,6 +3,7 @@ HowToCook Python MCP 服务器主应用
 """
 
 import logging
+from typing import Optional
 from fastmcp import FastMCP
 from fastmcp.server.middleware.timing import TimingMiddleware
 from fastmcp.server.middleware.logging import LoggingMiddleware
@@ -66,7 +67,7 @@ def create_app() -> FastMCP:
 
     @app.prompt("recipe_recommendation")
     async def recipe_recommendation_assistant_prompt(
-        occasion: str, cooking_time: int = None, skill_level: str = "beginner"
+        occasion: str, cooking_time: Optional[int] = None, skill_level: str = "beginner"
     ):
         """菜谱推荐提示模板"""
         return await recipe_recommendation_prompt(occasion, cooking_time, skill_level)
