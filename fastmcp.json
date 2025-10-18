@@ -13,15 +13,29 @@
   "bugs": {
     "url": "https://github.com/yutayouguan/howtocook-py-mcp/issues"
   },
-  "keywords": ["mcp", "recipes", "cooking", "meal-planning", "fastmcp", "chinese-cuisine"],
-  "categories": ["food", "lifestyle", "productivity", "health"],
+  "keywords": [
+    "mcp",
+    "recipes",
+    "cooking",
+    "meal-planning",
+    "fastmcp",
+    "chinese-cuisine"
+  ],
+  "categories": [
+    "food",
+    "lifestyle",
+    "productivity",
+    "health"
+  ],
   "source": {
     "type": "module",
     "module": "server.py"
   },
   "server": {
     "command": "python",
-    "args": ["server.py"],
+    "args": [
+      "server.py"
+    ],
     "env": {
       "PYTHONPATH": ".",
       "PYTHONIOENCODING": "utf-8"
@@ -45,7 +59,7 @@
       }
     },
     {
-      "name": "get_recipes_by_category", 
+      "name": "get_recipes_by_category",
       "description": "根据分类查询菜谱，如水产、早餐、荤菜、主食等",
       "inputSchema": {
         "type": "object",
@@ -55,7 +69,9 @@
             "description": "菜谱分类名称"
           }
         },
-        "required": ["category"]
+        "required": [
+          "category"
+        ]
       }
     },
     {
@@ -71,7 +87,9 @@
             "description": "用餐人数"
           }
         },
-        "required": ["people_count"]
+        "required": [
+          "people_count"
+        ]
       }
     },
     {
@@ -101,7 +119,25 @@
             "description": "忌口食材列表"
           }
         },
-        "required": ["people_count"]
+        "required": [
+          "people_count"
+        ]
+      }
+    },
+    {
+      "name": "get_recipe_details",
+      "description": "获取指定菜谱的详细做法，包括食材、制作步骤、小贴士等",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recipe_name": {
+            "type": "string",
+            "description": "菜谱名称，如'宫保鸡丁'、'麻婆豆腐'等"
+          }
+        },
+        "required": [
+          "recipe_name"
+        ]
       }
     }
   ],

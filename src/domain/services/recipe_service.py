@@ -77,3 +77,45 @@ class RecipeService:
         """
         recipes = await self.repository.fetch_all_recipes()
         return self.repository.get_all_categories(recipes)
+
+    @performance_tracked("get_recipe_details")
+    async def get_recipe_details(self, recipe_name: str) -> str:
+        """
+        获取指定菜谱的详细做法
+
+        Args:
+            recipe_name: 菜谱名称
+
+        Returns:
+            菜谱的详细信息，包括食材、做法步骤、小贴士等
+        """
+        recipes = await self.repository.fetch_all_recipes()
+        if not recipes:
+            return "未能获取菜谱数据"
+
+        # 查找指定名称的菜谱
+        target_recipe = None
+        for recipe in recipes:
+            if recipe.name == recipe_name or recipe_name in recipe.name:
+                target_recipe = recipe
+                break
+
+        if not target_recipe:
+            # 如果没有找到完全匹配的，尝试模糊匹配
+            for recipe in recipes:
+                if (
+                    recipe_name.lower() in recipe.name.lower()
+                    or recipe.name.lower() in recipe_name.lower()
+                ):
+                    target_recipe = recipe
+                    break
+
+        if not target_recipe:
+            return f"未找到名为 '{recipe_name}' 的菜谱。请检查菜谱名称是否正确，或使用 get_all_recipes 工具查看所有可用菜谱。"
+
+        # 返回完整的菜谱信息
+        return json.dumps(
+            target_recipe.model_dump(),
+            ensure_ascii=False,
+            indent=2,
+        )
