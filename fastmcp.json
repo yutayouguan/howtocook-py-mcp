@@ -218,6 +218,94 @@
           "recipe_names"
         ]
       }
+    },
+    {
+      "name": "search_recipes_by_cuisine",
+      "description": "按菜系搜索菜谱，支持川菜、粤菜、鲁菜等八大菜系",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "cuisine_type": {
+            "type": "string",
+            "description": "菜系类型，如'川菜'、'粤菜'、'鲁菜'等"
+          }
+        },
+        "required": [
+          "cuisine_type"
+        ]
+      }
+    },
+    {
+      "name": "get_ingredient_substitutes",
+      "description": "获取食材的替代建议，当某种食材缺失时提供替代方案",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ingredient_name": {
+            "type": "string",
+            "description": "需要替代的食材名称，如'生抽'、'料酒'、'五花肉'等"
+          }
+        },
+        "required": [
+          "ingredient_name"
+        ]
+      }
+    },
+    {
+      "name": "search_recipes_by_tags",
+      "description": "按标签搜索菜谱，如下饭菜、宴客菜、快手菜等",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "标签列表，如['下饭菜', '宴客菜', '快手菜']"
+          }
+        },
+        "required": [
+          "tags"
+        ]
+      }
+    },
+    {
+      "name": "get_seasonal_recommendations",
+      "description": "获取季节性菜谱推荐，根据时令食材推荐合适的菜谱",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "season": {
+            "type": "string",
+            "enum": [
+              "spring",
+              "summer",
+              "autumn",
+              "winter",
+              "current"
+            ],
+            "default": "current",
+            "description": "季节：spring(春)、summer(夏)、autumn(秋)、winter(冬)、current(当前季节)"
+          }
+        }
+      }
+    },
+    {
+      "name": "analyze_recipe_nutrition",
+      "description": "分析菜谱营养成分，估算卡路里、蛋白质、脂肪等营养信息",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recipe_name": {
+            "type": "string",
+            "description": "菜谱名称"
+          }
+        },
+        "required": [
+          "recipe_name"
+        ]
+      }
     }
   ],
   "resources": [

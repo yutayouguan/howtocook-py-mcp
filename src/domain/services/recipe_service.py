@@ -413,3 +413,371 @@ class RecipeService:
             result["not_found_recipes"] = not_found
 
         return json.dumps(result, ensure_ascii=False, indent=2)
+
+    @performance_tracked("search_recipes_by_cuisine")
+    async def search_recipes_by_cuisine(self, cuisine_type: str) -> str:
+        """
+        按菜系搜索菜谱
+
+        Args:
+            cuisine_type: 菜系类型
+
+        Returns:
+            指定菜系的菜谱列表
+        """
+        from ...shared.constants import CUISINE_TYPES
+
+        recipes = await self.repository.fetch_all_recipes()
+        if not recipes:
+            return "未能获取菜谱数据"
+
+        # 获取菜系关键词
+        keywords = CUISINE_TYPES.get(cuisine_type, [cuisine_type])
+
+        # 搜索包含菜系关键词的菜谱
+        matching_recipes = []
+        for recipe in recipes:
+            recipe_text = f"{recipe.name} {recipe.description}".lower()
+
+            # 检查是否包含菜系关键词
+            for keyword in keywords:
+                if keyword.lower() in recipe_text:
+                    matching_recipes.append(recipe)
+                    break
+
+        if not matching_recipes:
+            available_cuisines = list(CUISINE_TYPES.keys())
+            return f"未找到 '{cuisine_type}' 菜系的菜谱。支持的菜系: {', '.join(available_cuisines)}"
+
+        # 简化菜谱信息
+        simplified_recipes = [simplify_recipe(recipe) for recipe in matching_recipes]
+
+        return json.dumps(
+            {
+                "cuisine_type": cuisine_type,
+                "total_found": len(matching_recipes),
+                "recipes": [recipe.model_dump() for recipe in simplified_recipes],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    @performance_tracked("get_ingredient_substitutes")
+    async def get_ingredient_substitutes(self, ingredient_name: str) -> str:
+        """
+        获取食材的替代建议
+
+        Args:
+            ingredient_name: 需要替代的食材名称
+
+        Returns:
+            该食材的替代方案和使用建议
+        """
+        from ...shared.constants import INGREDIENT_SUBSTITUTES
+
+        # 直接匹配
+        if ingredient_name in INGREDIENT_SUBSTITUTES:
+            substitutes = INGREDIENT_SUBSTITUTES[ingredient_name]
+        else:
+            # 模糊匹配
+            substitutes = []
+            for key, values in INGREDIENT_SUBSTITUTES.items():
+                if ingredient_name in key or key in ingredient_name:
+                    substitutes = values
+                    ingredient_name = key  # 使用匹配到的标准名称
+                    break
+
+        if not substitutes:
+            return f"暂未找到 '{ingredient_name}' 的替代方案。建议查找相似功能的食材或调料。"
+
+        return json.dumps(
+            {
+                "original_ingredient": ingredient_name,
+                "substitutes": substitutes,
+                "usage_tips": [
+                    "替代时请注意口味差异，可能需要调整用量",
+                    "建议先少量尝试，根据个人口味调整",
+                    "某些替代品可能会改变菜品的最终颜色或质地",
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    @performance_tracked("search_recipes_by_tags")
+    async def search_recipes_by_tags(self, tags: List[str]) -> str:
+        """
+        按标签搜索菜谱
+
+        Args:
+            tags: 标签列表
+
+        Returns:
+            包含指定标签的菜谱列表
+        """
+        recipes = await self.repository.fetch_all_recipes()
+        if not recipes:
+            return "未能获取菜谱数据"
+
+        if not tags:
+            return "请提供至少一个标签"
+
+        # 搜索包含指定标签的菜谱
+        matching_recipes = []
+        for recipe in recipes:
+            recipe_tags = [tag.lower() for tag in recipe.tags]
+            recipe_text = f"{recipe.name} {recipe.description}".lower()
+
+            match_count = 0
+            for tag in tags:
+                tag_lower = tag.lower()
+                # 检查标签是否在菜谱标签中或描述中
+                if tag_lower in recipe_tags or tag_lower in recipe_text:
+                    match_count += 1
+
+            if match_count > 0:
+                matching_recipes.append(
+                    {
+                        "recipe": recipe,
+                        "match_count": match_count,
+                        "match_ratio": match_count / len(tags),
+                    }
+                )
+
+        if not matching_recipes:
+            return f"未找到包含标签 {', '.join(tags)} 的菜谱"
+
+        # 按匹配度排序
+        matching_recipes.sort(
+            key=lambda x: (x["match_count"], x["match_ratio"]), reverse=True
+        )
+
+        # 简化菜谱信息
+        result_recipes = []
+        for item in matching_recipes[:20]:  # 限制返回前20个结果
+            recipe = item["recipe"]
+            simplified = simplify_recipe(recipe)
+            simplified_dict = simplified.model_dump()
+            simplified_dict["match_info"] = {
+                "matched_tags": item["match_count"],
+                "total_searched": len(tags),
+                "recipe_tags": recipe.tags,
+            }
+            result_recipes.append(simplified_dict)
+
+        return json.dumps(
+            {
+                "searched_tags": tags,
+                "total_found": len(matching_recipes),
+                "recipes": result_recipes,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    @performance_tracked("get_seasonal_recommendations")
+    async def get_seasonal_recommendations(self, season: str = "current") -> str:
+        """
+        获取季节性菜谱推荐
+
+        Args:
+            season: 季节
+
+        Returns:
+            适合该季节的菜谱推荐
+        """
+        from ...shared.constants import SEASONAL_INGREDIENTS
+        import datetime
+
+        # 确定季节
+        if season == "current":
+            month = datetime.datetime.now().month
+            if month in [3, 4, 5]:
+                season = "spring"
+            elif month in [6, 7, 8]:
+                season = "summer"
+            elif month in [9, 10, 11]:
+                season = "autumn"
+            else:
+                season = "winter"
+
+        season_map = {
+            "spring": "春季",
+            "summer": "夏季",
+            "autumn": "秋季",
+            "winter": "冬季",
+        }
+
+        if season not in SEASONAL_INGREDIENTS:
+            return f"不支持的季节: {season}。支持的季节: spring(春), summer(夏), autumn(秋), winter(冬), current(当前)"
+
+        seasonal_ingredients = SEASONAL_INGREDIENTS[season]
+
+        recipes = await self.repository.fetch_all_recipes()
+        if not recipes:
+            return "未能获取菜谱数据"
+
+        # 搜索包含时令食材的菜谱
+        seasonal_recipes = []
+        for recipe in recipes:
+            ingredient_names = [ing.name.lower() for ing in recipe.ingredients]
+            recipe_text = f"{recipe.name} {recipe.description}".lower()
+
+            seasonal_count = 0
+            matched_ingredients = []
+
+            for seasonal_ing in seasonal_ingredients:
+                seasonal_ing_lower = seasonal_ing.lower()
+                # 检查是否包含时令食材
+                for ing_name in ingredient_names:
+                    if seasonal_ing_lower in ing_name or ing_name in seasonal_ing_lower:
+                        seasonal_count += 1
+                        matched_ingredients.append(seasonal_ing)
+                        break
+                # 也检查菜名和描述
+                if seasonal_ing_lower in recipe_text:
+                    if seasonal_ing not in matched_ingredients:
+                        seasonal_count += 1
+                        matched_ingredients.append(seasonal_ing)
+
+            if seasonal_count > 0:
+                seasonal_recipes.append(
+                    {
+                        "recipe": recipe,
+                        "seasonal_count": seasonal_count,
+                        "matched_ingredients": matched_ingredients,
+                    }
+                )
+
+        if not seasonal_recipes:
+            return f"未找到适合{season_map.get(season, season)}的菜谱"
+
+        # 按时令食材数量排序
+        seasonal_recipes.sort(key=lambda x: x["seasonal_count"], reverse=True)
+
+        # 简化菜谱信息
+        result_recipes = []
+        for item in seasonal_recipes[:15]:  # 限制返回前15个结果
+            recipe = item["recipe"]
+            simplified = simplify_recipe(recipe)
+            simplified_dict = simplified.model_dump()
+            simplified_dict["seasonal_info"] = {
+                "seasonal_ingredients_count": item["seasonal_count"],
+                "matched_seasonal_ingredients": item["matched_ingredients"],
+            }
+            result_recipes.append(simplified_dict)
+
+        return json.dumps(
+            {
+                "season": season_map.get(season, season),
+                "seasonal_ingredients": seasonal_ingredients,
+                "total_found": len(seasonal_recipes),
+                "recipes": result_recipes,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    @performance_tracked("analyze_recipe_nutrition")
+    async def analyze_recipe_nutrition(self, recipe_name: str) -> str:
+        """
+        分析菜谱营养成分
+
+        Args:
+            recipe_name: 菜谱名称
+
+        Returns:
+            菜谱的营养分析
+        """
+        from ...shared.constants import NUTRITION_DATA
+
+        recipes = await self.repository.fetch_all_recipes()
+        if not recipes:
+            return "未能获取菜谱数据"
+
+        # 查找指定菜谱
+        target_recipe = None
+        for recipe in recipes:
+            if recipe.name == recipe_name or recipe_name in recipe.name:
+                target_recipe = recipe
+                break
+
+        if not target_recipe:
+            return f"未找到名为 '{recipe_name}' 的菜谱"
+
+        # 分析营养成分
+        total_nutrition = {"calories": 0, "protein": 0, "fat": 0, "carbs": 0}
+        analyzed_ingredients = []
+        unknown_ingredients = []
+
+        for ingredient in target_recipe.ingredients:
+            ing_name = ingredient.name
+            found_nutrition = False
+
+            # 尝试匹配营养数据
+            for nutrition_key, nutrition_value in NUTRITION_DATA.items():
+                if nutrition_key in ing_name or ing_name in nutrition_key:
+                    # 估算重量 (简化处理)
+                    estimated_weight = 100  # 默认100g
+                    if ingredient.quantity:
+                        estimated_weight = ingredient.quantity
+                    elif "克" in ingredient.text_quantity:
+                        try:
+                            estimated_weight = float(
+                                "".join(filter(str.isdigit, ingredient.text_quantity))
+                            )
+                        except:
+                            pass
+
+                    # 计算营养成分
+                    weight_ratio = estimated_weight / 100
+                    ingredient_nutrition = {
+                        "name": ing_name,
+                        "weight_g": estimated_weight,
+                        "calories": nutrition_value["calories"] * weight_ratio,
+                        "protein": nutrition_value["protein"] * weight_ratio,
+                        "fat": nutrition_value["fat"] * weight_ratio,
+                        "carbs": nutrition_value["carbs"] * weight_ratio,
+                    }
+
+                    analyzed_ingredients.append(ingredient_nutrition)
+
+                    # 累加到总营养
+                    for key in total_nutrition:
+                        total_nutrition[key] += ingredient_nutrition[key]
+
+                    found_nutrition = True
+                    break
+
+            if not found_nutrition:
+                unknown_ingredients.append(ing_name)
+
+        # 按人数调整
+        servings = target_recipe.servings if target_recipe.servings > 0 else 1
+        per_serving_nutrition = {
+            key: round(value / servings, 1) for key, value in total_nutrition.items()
+        }
+
+        return json.dumps(
+            {
+                "recipe_name": target_recipe.name,
+                "servings": servings,
+                "total_nutrition": {
+                    "calories": round(total_nutrition["calories"], 1),
+                    "protein_g": round(total_nutrition["protein"], 1),
+                    "fat_g": round(total_nutrition["fat"], 1),
+                    "carbs_g": round(total_nutrition["carbs"], 1),
+                },
+                "per_serving_nutrition": {
+                    "calories": per_serving_nutrition["calories"],
+                    "protein_g": per_serving_nutrition["protein"],
+                    "fat_g": per_serving_nutrition["fat"],
+                    "carbs_g": per_serving_nutrition["carbs"],
+                },
+                "analyzed_ingredients": analyzed_ingredients,
+                "unknown_ingredients": unknown_ingredients,
+                "analysis_note": "营养数据为估算值，实际数值可能因食材品质、烹饪方法等因素有所差异",
+            },
+            ensure_ascii=False,
+            indent=2,
+        )

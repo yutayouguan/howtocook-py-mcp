@@ -98,3 +98,68 @@ def register_recipe_tools(server: FastMCP):
             按分类整理的购物清单，包含食材名称和用量
         """
         return await recipe_service.generate_shopping_list(recipe_names, people_count)
+
+    @server.tool()
+    async def search_recipes_by_cuisine(cuisine_type: str):
+        """
+        按菜系搜索菜谱
+
+        Args:
+            cuisine_type: 菜系类型，如"川菜"、"粤菜"、"鲁菜"、"苏菜"、"浙菜"、"闽菜"、"湘菜"、"徽菜"等
+
+        Returns:
+            指定菜系的菜谱列表
+        """
+        return await recipe_service.search_recipes_by_cuisine(cuisine_type)
+
+    @server.tool()
+    async def get_ingredient_substitutes(ingredient_name: str):
+        """
+        获取食材的替代建议
+
+        Args:
+            ingredient_name: 需要替代的食材名称，如"生抽"、"料酒"、"五花肉"等
+
+        Returns:
+            该食材的替代方案和使用建议
+        """
+        return await recipe_service.get_ingredient_substitutes(ingredient_name)
+
+    @server.tool()
+    async def search_recipes_by_tags(tags: list[str]):
+        """
+        按标签搜索菜谱
+
+        Args:
+            tags: 标签列表，如["下饭菜", "宴客菜", "快手菜", "素食", "减脂"]等
+
+        Returns:
+            包含指定标签的菜谱列表
+        """
+        return await recipe_service.search_recipes_by_tags(tags)
+
+    @server.tool()
+    async def get_seasonal_recommendations(season: str = "current"):
+        """
+        获取季节性菜谱推荐
+
+        Args:
+            season: 季节，可选值："spring"(春)、"summer"(夏)、"autumn"(秋)、"winter"(冬)、"current"(当前季节)
+
+        Returns:
+            适合该季节的菜谱推荐，包含时令食材
+        """
+        return await recipe_service.get_seasonal_recommendations(season)
+
+    @server.tool()
+    async def analyze_recipe_nutrition(recipe_name: str):
+        """
+        分析菜谱营养成分
+
+        Args:
+            recipe_name: 菜谱名称
+
+        Returns:
+            菜谱的营养分析，包括估算的卡路里、蛋白质、脂肪等信息
+        """
+        return await recipe_service.analyze_recipe_nutrition(recipe_name)
