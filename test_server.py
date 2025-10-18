@@ -7,13 +7,10 @@ HowToCook MCP 服务器的综合测试套件
 import asyncio
 import json
 import logging
-from src.app import app
-from src.tools.get_all_recipes import get_all_recipes
-from src.tools.get_recipes_by_category import get_recipes_by_category
-from src.tools.what_to_eat import what_to_eat
-from src.tools.recommend_meals import recommend_meals
-from src.cache import cache
-from src.config import get_server_config
+from src.core.app import app
+from src.domain.services import RecipeService, MealService, RecommendationService
+from src.infrastructure.cache import get_cache
+from src.core.config import get_config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,10 +21,14 @@ async def test_tools():
     """测试所有 MCP 工具"""
     print("🧪 开始测试 HowToCook MCP 工具...")
 
+    recipe_service = RecipeService()
+    meal_service = MealService()
+    recommendation_service = RecommendationService()
+
     # Test 1: Get all recipes
     print("\n1. 测试获取所有菜谱...")
     try:
-        result = await get_all_recipes()
+        result = await recipe_service.get_all_recipes()
         data = json.loads(result)
         print(f"   ✅ 成功获取 {len(data)} 个菜谱")
     except Exception as e:
@@ -38,18 +39,45 @@ async def test_tools():
     categories = ["水产", "早餐", "荤菜", "主食"]
     for category in categories:
         try:
-            result = await get_recipes_by_category(category)
+            result = await recipe_service.get_recipes_by_category(category)
             data = json.loads(result)
             print(f"   ✅ {category}: {len(data)} 个菜谱")
         except Exception as e:
             print(f"   ❌ {category} 失败: {e}")
 
-    # Test 3: What to eat recommendations
-    print("\n3. 测试菜品推荐...")
+    # Test 3: Recipe details
+    print("\n3. 测试菜谱详情...")
+    try:
+        result = await recipe_service.get_recipe_details("宫保鸡丁")
+        data = json.loads(result)
+        print(f"   ✅ 获取菜谱详情: {data.get('name', '未知')}")
+    except Exception as e:
+        print(f"   ❌ 失败: {e}")
+
+    # Test 4: Search by ingredients
+    print("\n4. 测试按食材搜索...")
+    try:
+        result = await recipe_service.search_recipes_by_ingredients(["鸡肉", "土豆"])
+        data = json.loads(result)
+        print(f"   ✅ 找到 {data.get('total_found', 0)} 个匹配菜谱")
+    except Exception as e:
+        print(f"   ❌ 失败: {e}")
+
+    # Test 5: Filter by difficulty
+    print("\n5. 测试按难度筛选...")
+    try:
+        result = await recipe_service.filter_recipes_by_difficulty(2)
+        data = json.loads(result)
+        print(f"   ✅ 2星难度菜谱: {data.get('total_count', 0)} 个")
+    except Exception as e:
+        print(f"   ❌ 失败: {e}")
+
+    # Test 6: What to eat recommendations
+    print("\n6. 测试菜品推荐...")
     people_counts = [2, 4, 6]
     for count in people_counts:
         try:
-            result = await what_to_eat(count)
+            result = await recommendation_service.what_to_eat(count)
             data = json.loads(result)
             print(
                 f"   ✅ {count}人: {data['meat_dish_count']}荤 + {data['vegetable_dish_count']}素"
@@ -57,17 +85,47 @@ async def test_tools():
         except Exception as e:
             print(f"   ❌ {count}人 失败: {e}")
 
-    # Test 4: Meal planning
-    print("\n4. 测试膳食计划...")
+    # Test 7: Meal planning
+    print("\n7. 测试膳食计划...")
     try:
-        result = await recommend_meals(3, allergies=["虾"], avoid_items=["香菜"])
+        result = await meal_service.recommend_meals(
+            3, allergies=["虾"], avoid_items=["香菜"]
+        )
         data = json.loads(result)
-        print(f"   ✅ 制定了 {len(data['weekdays'])} 天的膳食计划")
-        if data["weekdays"]:
-            first_day = data["weekdays"][0]
-            print(
-                f"   {first_day['day']}: 早餐{len(first_day['breakfast'])}道, 午餐{len(first_day['lunch'])}道, 晚餐{len(first_day['dinner'])}道"
-            )
+        print(f"   ✅ 制定了 {len(data.get('weekdays', []))} 天的膳食计划")
+    except Exception as e:
+        print(f"   ❌ 失败: {e}")
+
+    # Test 8: Generate shopping list
+    print("\n8. 测试购物清单生成...")
+    try:
+        result = await recipe_service.generate_shopping_list(
+            ["宫保鸡丁", "麻婆豆腐"], 4
+        )
+        data = json.loads(result)
+        print(f"   ✅ 生成购物清单: {data.get('total_ingredients', 0)} 种食材")
+    except Exception as e:
+        print(f"   ❌ 失败: {e}")
+
+    # Test 9: Seasonal recommendations
+    print("\n9. 测试季节推荐...")
+    try:
+        result = await recipe_service.get_seasonal_recommendations("current")
+        data = json.loads(result)
+        print(
+            f"   ✅ {data.get('season', '未知')}季节推荐: {data.get('total_found', 0)} 个菜谱"
+        )
+    except Exception as e:
+        print(f"   ❌ 失败: {e}")
+
+    # Test 10: Nutrition analysis
+    print("\n10. 测试营养分析...")
+    try:
+        result = await recipe_service.analyze_recipe_nutrition("宫保鸡丁")
+        data = json.loads(result)
+        print(
+            f"   ✅ 营养分析: {data.get('total_nutrition', {}).get('calories', 0)} 卡路里"
+        )
     except Exception as e:
         print(f"   ❌ 失败: {e}")
 
@@ -86,9 +144,12 @@ async def test_error_handling():
     """测试错误处理机制"""
     print("\n🛡️ 测试错误处理...")
 
+    recommendation_service = RecommendationService()
+    recipe_service = RecipeService()
+
     # Test invalid people count
     try:
-        await what_to_eat(15)  # Invalid count
+        await recommendation_service.what_to_eat(15)  # Invalid count
         print("   ❌ 应该抛出错误但没有")
     except ValueError:
         print("   ✅ 正确处理无效人数")
@@ -97,7 +158,7 @@ async def test_error_handling():
 
     # Test invalid category
     try:
-        result = await get_recipes_by_category("不存在的分类")
+        result = await recipe_service.get_recipes_by_category("不存在的分类")
         data = json.loads(result)
         print(f"   ✅ 不存在的分类返回 {len(data)} 个结果")
     except Exception as e:
@@ -107,6 +168,8 @@ async def test_error_handling():
 async def test_cache_system():
     """测试缓存系统"""
     print("\n💾 测试缓存系统...")
+
+    cache = get_cache()
 
     # 测试缓存设置和获取
     try:
@@ -135,13 +198,11 @@ async def test_configuration():
     print("\n⚙️ 测试配置系统...")
 
     try:
-        config = get_server_config()
-        print(f"   ✅ 服务器名称: {config['name']}")
-        print(f"   ✅ 服务器版本: {config['version']}")
-        print(f"   ✅ 缓存配置: {config['cache']}")
-        print(
-            f"   ✅ 推荐配置: {config['recommendation']['max_people_count']} 最大人数"
-        )
+        config = get_config()
+        print(f"   ✅ 服务器名称: {config.server.name}")
+        print(f"   ✅ 服务器版本: {config.server.version}")
+        print(f"   ✅ 缓存配置: 启用={config.cache.enabled}, TTL={config.cache.ttl}")
+        print(f"   ✅ 推荐配置: {config.recommendation.max_people_count} 最大人数")
     except Exception as e:
         print(f"   ❌ 配置测试失败: {e}")
 
