@@ -139,6 +139,85 @@
           "recipe_name"
         ]
       }
+    },
+    {
+      "name": "search_recipes_by_ingredients",
+      "description": "根据现有食材搜索可以制作的菜谱，按匹配度排序",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "ingredients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "现有食材列表，如['鸡肉', '土豆', '胡萝卜']"
+          }
+        },
+        "required": [
+          "ingredients"
+        ]
+      }
+    },
+    {
+      "name": "filter_recipes_by_difficulty",
+      "description": "按烹饪难度筛选菜谱（1-5星，1=最简单，5=最复杂）",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "difficulty": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "description": "烹饪难度等级，1-5星"
+          }
+        },
+        "required": [
+          "difficulty"
+        ]
+      }
+    },
+    {
+      "name": "search_recipes_by_time",
+      "description": "按制作时间筛选菜谱，找出在指定时间内能完成的菜",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "max_time_minutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "最大制作时间（分钟）"
+          }
+        },
+        "required": [
+          "max_time_minutes"
+        ]
+      }
+    },
+    {
+      "name": "generate_shopping_list",
+      "description": "根据菜谱生成购物清单，按分类整理食材",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "recipe_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "菜谱名称列表"
+          },
+          "people_count": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 1,
+            "description": "用餐人数，用于调整食材用量"
+          }
+        },
+        "required": [
+          "recipe_names"
+        ]
+      }
     }
   ],
   "resources": [
