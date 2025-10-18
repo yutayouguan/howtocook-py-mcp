@@ -28,7 +28,7 @@ dev:
 
 # 运行测试
 test:
-	python test_server.py
+	python tests/integration/test_server.py
 	python example_usage.py
 
 # 代码检查
@@ -65,7 +65,8 @@ dev-server:
 # 运行完整测试套件
 test-full:
 	pytest tests/ -v
-	python test_server.py
+	python tests/integration/test_server.py
+	python tests/integration/test_mcp_server.py
 	python example_usage.py
 
 # 构建项目

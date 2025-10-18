@@ -30,9 +30,10 @@ howtocook-py-mcp/
 - `requirements.txt` - Python 依赖列表
 
 ### 🧪 测试文件
-- `test_server.py` - 完整功能测试
+- `tests/integration/test_server.py` - 完整功能测试
+- `tests/integration/test_mcp_server.py` - MCP 协议测试
+- `tests/unit/test_recipe_service.py` - 单元测试
 - `example_usage.py` - 功能演示
-- `test_mcp_server.py` - MCP 协议测试
 
 ### 🛠️ 开发工具
 - `Makefile` - 项目管理命令

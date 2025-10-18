@@ -259,13 +259,17 @@ python main.py
 ### 快速测试
 ```bash
 # 运行完整测试套件（14个工具全覆盖）
-python test_server.py
+python tests/integration/test_server.py
+
+# 运行MCP协议测试
+python tests/integration/test_mcp_server.py
 
 # 运行功能示例展示
 python example_usage.py
 
 # 使用 Makefile 管理项目
 make test          # 运行所有测试
+make test-full     # 运行完整测试套件
 make lint          # 代码质量检查
 make format        # 代码格式化
 make clean         # 清理缓存文件
@@ -394,7 +398,7 @@ make inspect       # 检查服务器配置
 
 ### 测试覆盖
 - **单元测试**: `tests/unit/` - 核心逻辑测试
-- **集成测试**: `test_server.py` - 完整功能测试
+- **集成测试**: `tests/integration/` - 完整功能测试
 - **示例展示**: `example_usage.py` - 14个工具演示
 
 ### 代码质量

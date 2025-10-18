@@ -76,7 +76,7 @@ fastmcp inspect server.py
 # 运行测试套件
 make test
 # 或
-python test_server.py
+python tests/integration/test_server.py
 
 # 运行功能演示
 python example_usage.py
@@ -250,7 +250,7 @@ fastmcp inspect server.py
 
 # 运行完整测试套件（包含性能测试）
 make test
-python test_server.py
+python tests/integration/test_server.py
 
 # 查看缓存统计
 python -c "
@@ -425,7 +425,10 @@ spec:
 
 ```bash
 # 运行完整功能测试
-python test_server.py
+python tests/integration/test_server.py
+
+# 运行MCP协议测试
+python tests/integration/test_mcp_server.py
 
 # 运行功能演示
 python example_usage.py
