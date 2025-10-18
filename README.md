@@ -361,19 +361,21 @@ MIT License - 随意使用，就像分享美食配方一样慷慨！
 
 ## 📚 完整文档
 
-### 用户文档
-- [功能详细说明](FEATURES.md) - 14个工具的详细介绍和使用方法
-- [配置说明](CONFIGURATION_SUMMARY.md) - 配置选项和环境变量
+### 📖 用户文档
+- [功能详细说明](docs/FEATURES.md) - 14个工具的详细介绍和使用方法
+- [配置说明](docs/CONFIGURATION_SUMMARY.md) - 配置选项和环境变量
+- [服务器配置](docs/SERVER_CONFIG.md) - 服务器配置详解
 
-### 开发文档
-- [开发者指南](DEVELOPER_GUIDE.md) - 完整的开发指南和最佳实践 ⭐
-- [架构设计文档](ARCHITECTURE.md) - 技术架构和设计理念
-- [优化报告](OPTIMIZATION.md) - 性能优化和代码质量改进
-
-### 项目信息
-- [更新日志](CHANGELOG.md) - 版本更新记录和功能演进
+### 🛠️ 开发文档
+- [开发者指南](docs/DEVELOPER_GUIDE.md) - 完整的开发指南和最佳实践 ⭐
+- [架构设计文档](docs/ARCHITECTURE.md) - 技术架构和设计理念
+- [优化报告](docs/OPTIMIZATION.md) - 性能优化和代码质量改进
 - [API文档](docs/API.md) - 接口文档
 - [部署指南](docs/DEPLOYMENT.md) - 部署说明
+
+### 📋 项目信息
+- [更新日志](CHANGELOG.md) - 版本更新记录和功能演进
+- [项目结构](PROJECT_STRUCTURE.md) - 目录结构和文件说明
 
 ## 🛠️ 开发指南
 

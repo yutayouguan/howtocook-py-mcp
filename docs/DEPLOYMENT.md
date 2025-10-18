@@ -4,6 +4,13 @@
 
 本文档提供了 HowToCook MCP 服务器的详细部署指南，包括本地开发、生产环境部署和容器化部署。
 
+**项目特色**:
+- 🍳 **14个专业工具**: 覆盖完整烹饪流程
+- 🔍 **6维度搜索**: 食材、难度、时间、菜系、标签、季节
+- 📊 **营养分析**: 智能营养成分计算
+- 🛒 **购物助手**: 自动生成分类购物清单
+- 🧪 **企业级质量**: 80%+ 测试覆盖率，完整的代码质量保证
+
 ## 本地开发部署
 
 ### 1. 环境准备
@@ -43,21 +50,60 @@ REQUEST_TIMEOUT=30
 ### 3. 启动服务
 
 ```bash
+# 使用 Makefile（推荐）
+make run
+
 # 直接启动
 python main.py
 
-# 或使用 uvx（推荐）
-uvx howtocook-py-mcp
+# 使用 FastMCP CLI
+fastmcp run server.py
+
+# 开发模式
+make dev-server
+# 或
+fastmcp dev server.py
+```
+
+### 4. 验证部署
+
+```bash
+# 检查服务器配置
+make inspect
+# 或
+fastmcp inspect server.py
+
+# 运行测试套件
+make test
+# 或
+python test_server.py
+
+# 运行功能演示
+python example_usage.py
 ```
 
 ## 生产环境部署
 
 ### 1. 系统要求
 
-- Python 3.12+
-- 内存: 最少 512MB，推荐 1GB+
-- 存储: 最少 100MB
-- 网络: 稳定的互联网连接
+- **Python**: 3.12+ (必需)
+- **内存**: 最少 512MB，推荐 1GB+ (支持14个工具和缓存)
+- **存储**: 最少 200MB (包含依赖和缓存)
+- **网络**: 稳定的互联网连接 (获取菜谱数据)
+- **CPU**: 单核即可，多核可提升并发性能
+
+#### 依赖要求
+
+**核心依赖**:
+- fastmcp>=2.12.4
+- httpx>=0.28.1  
+- pydantic>=2.7.2
+
+**开发依赖** (可选):
+- pytest>=7.0.0 (测试)
+- black>=23.0.0 (代码格式化)
+- isort>=5.12.0 (导入排序)
+- mypy>=1.0.0 (类型检查)
 
 ### 2. 安全配置
 
@@ -198,15 +244,23 @@ docker logs -f howtocook-mcp
 ### 2. 性能监控
 
 ```bash
-# 检查健康状态
-curl -s http://localhost:8000/health | jq
+# 检查服务器配置和状态
+make inspect
+fastmcp inspect server.py
 
-# 查看性能指标
+# 运行完整测试套件（包含性能测试）
+make test
+python test_server.py
+
+# 查看缓存统计
 python -c "
-import asyncio
-from src.monitoring import monitor
-print(asyncio.run(monitor.get_stats()))
+from src.infrastructure.cache import get_cache
+cache = get_cache()
+print(cache.get_stats())
 "
+
+# 检查健康状态（如果使用HTTP传输）
+curl -s http://localhost:8000/mcp/health | jq
 ```
 
 ### 3. 缓存管理
@@ -215,15 +269,29 @@ print(asyncio.run(monitor.get_stats()))
 # 清理缓存
 python -c "
 import asyncio
-from src.cache import cache
+from src.infrastructure.cache import get_cache
+cache = get_cache()
 asyncio.run(cache.clear())
 print('缓存已清理')
 "
 
 # 查看缓存统计
 python -c "
-from src.cache import cache
+from src.infrastructure.cache import get_cache
+cache = get_cache()
 print(cache.get_stats())
+"
+
+# 测试缓存功能
+python -c "
+import asyncio
+from src.infrastructure.cache import get_cache
+async def test_cache():
+    cache = get_cache()
+    await cache.set('test', 'value', 60)
+    result = await cache.get('test')
+    print(f'缓存测试: {result}')
+asyncio.run(test_cache())
 "
 ```
 
@@ -251,11 +319,23 @@ print(cache.get_stats())
 ```bash
 # 启用调试日志
 export LOG_LEVEL=DEBUG
-python main.py
+make run
 
 # 禁用缓存进行测试
 export CACHE_ENABLED=false
 python main.py
+
+# 使用开发模式（自动重载）
+make dev-server
+
+# 运行代码质量检查
+make lint
+
+# 运行代码格式化
+make format
+
+# 清理缓存文件
+make clean
 ```
 
 ## 安全建议
@@ -336,3 +416,140 @@ spec:
             memory: "512Mi"
             cpu: "500m"
 ```
+## 功能验证
+
+
+### 验证14个工具
+
+部署完成后，可以验证所有14个工具是否正常工作：
+
+```bash
+# 运行完整功能测试
+python test_server.py
+
+# 运行功能演示
+python example_usage.py
+
+# 检查工具数量
+fastmcp inspect server.py | grep "Tools:"
+# 应该显示: Tools: 14
+```
+
+### 功能分类测试
+
+```bash
+# 测试基础菜谱功能
+python -c "
+import asyncio
+from src.domain.services import RecipeService
+async def test():
+    service = RecipeService()
+    # 测试获取所有菜谱
+    result = await service.get_all_recipes()
+    print('✅ 基础功能正常')
+asyncio.run(test())
+"
+
+# 测试智能搜索功能
+python -c "
+import asyncio
+from src.domain.services import RecipeService
+async def test():
+    service = RecipeService()
+    # 测试按食材搜索
+    result = await service.search_recipes_by_ingredients(['鸡肉'])
+    print('✅ 搜索功能正常')
+asyncio.run(test())
+"
+
+# 测试营养分析功能
+python -c "
+import asyncio
+from src.domain.services import RecipeService
+async def test():
+    service = RecipeService()
+    # 测试营养分析
+    result = await service.analyze_recipe_nutrition('宫保鸡丁')
+    print('✅ 营养分析正常')
+asyncio.run(test())
+"
+```
+
+## 性能优化建议
+
+### 生产环境优化
+
+1. **缓存配置**
+   ```bash
+   export CACHE_ENABLED=true
+   export CACHE_TTL=7200  # 2小时缓存
+   ```
+
+2. **并发设置**
+   ```bash
+   export MAX_CONCURRENT_REQUESTS=50
+   export REQUEST_TIMEOUT=60
+   ```
+
+3. **日志级别**
+   ```bash
+   export LOG_LEVEL=WARNING  # 生产环境减少日志
+   ```
+
+### 监控指标
+
+关键监控指标：
+- **工具调用成功率**: 应该 > 95%
+- **平均响应时间**: 应该 < 2秒
+- **缓存命中率**: 应该 > 80%
+- **内存使用**: 应该 < 1GB
+- **数据源可用性**: 应该 > 99%
+
+### 扩展建议
+
+1. **水平扩展**: 可以运行多个实例进行负载均衡
+2. **缓存优化**: 考虑使用 Redis 替代内存缓存
+3. **数据源**: 可以配置本地数据源提高可靠性
+4. **监控**: 集成 Prometheus + Grafana 进行监控
+
+## 版本升级
+
+### 升级步骤
+
+1. **备份配置**
+   ```bash
+   cp .env .env.backup
+   cp -r logs logs.backup
+   ```
+
+2. **更新代码**
+   ```bash
+   git pull origin main
+   pip install -r requirements.txt
+   ```
+
+3. **运行测试**
+   ```bash
+   make test
+   ```
+
+4. **重启服务**
+   ```bash
+   sudo systemctl restart howtocook-mcp
+   ```
+
+### 版本兼容性
+
+- **v0.2.0**: 当前版本，14个工具，完整功能
+- **v0.1.0**: 旧版本，4个工具，基础功能
+
+升级到 v0.2.0 的主要变化：
+- 工具数量从 4个 增加到 14个
+- 新增 6维度智能搜索
+- 新增营养分析功能
+- 新增购物清单生成
+- 完善的测试和质量保证体系
+
+---
+
+💡 **部署提示**: 建议先在测试环境验证所有功能正常后再部署到生产环境。

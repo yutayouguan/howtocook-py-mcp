@@ -342,7 +342,7 @@ chore: 构建/工具相关
 - [功能说明](FEATURES.md)
 - [架构设计](ARCHITECTURE.md)
 - [优化报告](OPTIMIZATION.md)
-- [更新日志](CHANGELOG.md)
+- [更新日志](../CHANGELOG.md)
 
 ---
 
