@@ -27,6 +27,7 @@ if __name__ == "__main__":
         print(f"MCP路径: {server_config.path}")
 
         await app.run_http_async(
+            transport="streamable-http",
             host=server_config.host,
             port=server_config.port,
             path=server_config.path,

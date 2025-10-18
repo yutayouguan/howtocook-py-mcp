@@ -30,7 +30,8 @@ async def main():
             "workers": server_config.workers,
         }
 
-        await app.run_streamable_http_async(
+        await app.run_http_async(
+            transport="streamable-http",
             host=server_config.host,
             port=server_config.port,
             log_level=config.logging.level.lower(),
