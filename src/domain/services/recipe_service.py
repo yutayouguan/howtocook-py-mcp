@@ -3,8 +3,7 @@
 """
 
 import json
-from typing import List, Optional
-from ..models import Recipe, SimpleRecipe, NameOnlyRecipe
+from typing import List
 from ..repositories import RecipeRepository
 from ...infrastructure.monitoring.performance_monitor import performance_tracked
 from ...shared.utils import simplify_recipe, simplify_recipe_name_only
@@ -726,7 +725,7 @@ class RecipeService:
                             estimated_weight = float(
                                 "".join(filter(str.isdigit, ingredient.text_quantity))
                             )
-                        except:
+                        except (ValueError, TypeError):
                             pass
 
                     # 计算营养成分
